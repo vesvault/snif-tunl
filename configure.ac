@@ -3,7 +3,7 @@
 
 
 AC_PREREQ([2.69])
-AC_INIT([snifl], [0.50], [bugs@vesvault.com])
+AC_INIT([snifl], [0.90], [bugs@vesvault.com])
 AC_CONFIG_SRCDIR([snifl/tunl.c])
 AC_CONFIG_HEADERS([config.h])
 
@@ -14,6 +14,7 @@ AM_INIT_AUTOMAKE([1.0 subdir-objects])
 # Checks for programs.
 AC_PROG_CC
 AM_PROG_CC_C_O
+AC_PROG_RANLIB
 
 # Checks for header files.
 AC_CHECK_HEADERS([string.h stddef.h fcntl.h unistd.h sys/ioctl.h])

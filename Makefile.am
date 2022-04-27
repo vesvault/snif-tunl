@@ -23,6 +23,9 @@ demo/demo.c
 DEMO_HFILES = demo/tun_tap.h \
 demo/http.h
 
-bin_PROGRAMS = snifl-demo
 
+lib_LIBRARIES = libsnifl.a
+libsnifl_a_SOURCES = $(SNIFL_CFILES) $(SNIFL_HFILES)
+
+bin_PROGRAMS = snifl-demo
 snifl_demo_SOURCES = $(SNIFL_CFILES) $(DEMO_CFILES) $(SNIFL_HFILES) $(DEMO_HFILES)

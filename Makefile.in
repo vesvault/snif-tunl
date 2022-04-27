@@ -15,6 +15,7 @@
 
 @SET_MAKE@
 
+
 VPATH = @srcdir@
 pkgdatadir = $(datadir)/@PACKAGE@
 pkgincludedir = $(includedir)/@PACKAGE@
@@ -49,17 +50,45 @@ mkinstalldirs = $(install_sh) -d
 CONFIG_HEADER = config.h
 CONFIG_CLEAN_FILES =
 CONFIG_CLEAN_VPATH_FILES =
-am__installdirs = "$(DESTDIR)$(bindir)"
-PROGRAMS = $(bin_PROGRAMS)
+am__vpath_adj_setup = srcdirstrip=`echo "$(srcdir)" | sed 's|.|.|g'`;
+am__vpath_adj = case $$p in \
+    $(srcdir)/*) f=`echo "$$p" | sed "s|^$$srcdirstrip/||"`;; \
+    *) f=$$p;; \
+  esac;
+am__strip_dir = f=`echo $$p | sed -e 's|^.*/||'`;
+am__install_max = 40
+am__nobase_strip_setup = \
+  srcdirstrip=`echo "$(srcdir)" | sed 's/[].[^$$\\*|]/\\\\&/g'`
+am__nobase_strip = \
+  for p in $$list; do echo "$$p"; done | sed -e "s|$$srcdirstrip/||"
+am__nobase_list = $(am__nobase_strip_setup); \
+  for p in $$list; do echo "$$p $$p"; done | \
+  sed "s| $$srcdirstrip/| |;"' / .*\//!s/ .*/ ./; s,\( .*\)/[^/]*$$,\1,' | \
+  $(AWK) 'BEGIN { files["."] = "" } { files[$$2] = files[$$2] " " $$1; \
+    if (++n[$$2] == $(am__install_max)) \
+      { print $$2, files[$$2]; n[$$2] = 0; files[$$2] = "" } } \
+    END { for (dir in files) print dir, files[dir] }'
+am__base_list = \
+  sed '$$!N;$$!N;$$!N;$$!N;$$!N;$$!N;$$!N;s/\n/ /g' | \
+  sed '$$!N;$$!N;$$!N;$$!N;s/\n/ /g'
+am__installdirs = "$(DESTDIR)$(libdir)" "$(DESTDIR)$(bindir)"
+LIBRARIES = $(lib_LIBRARIES)
+AR = ar
+ARFLAGS = cru
+libsnifl_a_AR = $(AR) $(ARFLAGS)
+libsnifl_a_LIBADD =
 am__dirstamp = $(am__leading_dot)dirstamp
 am__objects_1 = snifl/v4.$(OBJEXT) snifl/udp.$(OBJEXT) \
 	snifl/tcp.$(OBJEXT) snifl/sock.$(OBJEXT) snifl/mgr.$(OBJEXT) \
 	snifl/dns.$(OBJEXT) snifl/jTree.$(OBJEXT) snifl/tunl.$(OBJEXT)
-am__objects_2 = demo/tun_tap.$(OBJEXT) demo/http.$(OBJEXT) \
+am__objects_2 =
+am_libsnifl_a_OBJECTS = $(am__objects_1) $(am__objects_2)
+libsnifl_a_OBJECTS = $(am_libsnifl_a_OBJECTS)
+PROGRAMS = $(bin_PROGRAMS)
+am__objects_3 = demo/tun_tap.$(OBJEXT) demo/http.$(OBJEXT) \
 	demo/demo.$(OBJEXT)
-am__objects_3 =
-am_snifl_demo_OBJECTS = $(am__objects_1) $(am__objects_2) \
-	$(am__objects_3) $(am__objects_3)
+am_snifl_demo_OBJECTS = $(am__objects_1) $(am__objects_3) \
+	$(am__objects_2) $(am__objects_2)
 snifl_demo_OBJECTS = $(am_snifl_demo_OBJECTS)
 snifl_demo_LDADD = $(LDADD)
 DEFAULT_INCLUDES = -I.@am__isrc@
@@ -70,8 +99,8 @@ COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
 	$(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
 CCLD = $(CC)
 LINK = $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) $(LDFLAGS) -o $@
-SOURCES = $(snifl_demo_SOURCES)
-DIST_SOURCES = $(snifl_demo_SOURCES)
+SOURCES = $(libsnifl_a_SOURCES) $(snifl_demo_SOURCES)
+DIST_SOURCES = $(libsnifl_a_SOURCES) $(snifl_demo_SOURCES)
 ETAGS = etags
 CTAGS = ctags
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
@@ -85,11 +114,11 @@ DIST_ARCHIVES = $(distdir).tar.gz
 GZIP_ENV = --best
 distuninstallcheck_listfiles = find . -type f -print
 distcleancheck_listfiles = find . -type f -print
-ACLOCAL = @ACLOCAL@
+ACLOCAL = /bin/true
 AMTAR = @AMTAR@
-AUTOCONF = @AUTOCONF@
-AUTOHEADER = @AUTOHEADER@
-AUTOMAKE = @AUTOMAKE@
+AUTOCONF = /bin/true
+AUTOHEADER = /bin/true
+AUTOMAKE = /bin/true
 AWK = @AWK@
 CC = @CC@
 CCDEPMODE = @CCDEPMODE@
@@ -125,6 +154,7 @@ PACKAGE_TARNAME = @PACKAGE_TARNAME@
 PACKAGE_URL = @PACKAGE_URL@
 PACKAGE_VERSION = @PACKAGE_VERSION@
 PATH_SEPARATOR = @PATH_SEPARATOR@
+RANLIB = @RANLIB@
 SET_MAKE = @SET_MAKE@
 SHELL = @SHELL@
 STRIP = @STRIP@
@@ -196,6 +226,8 @@ demo/demo.c
 DEMO_HFILES = demo/tun_tap.h \
 demo/http.h
 
+lib_LIBRARIES = libsnifl.a
+libsnifl_a_SOURCES = $(SNIFL_CFILES) $(SNIFL_HFILES)
 snifl_demo_SOURCES = $(SNIFL_CFILES) $(DEMO_CFILES) $(SNIFL_HFILES) $(DEMO_HFILES)
 all: config.h
 	$(MAKE) $(AM_MAKEFLAGS) all-am
@@ -253,6 +285,64 @@ $(srcdir)/config.h.in:  $(am__configure_deps)
 
 distclean-hdr:
 	-rm -f config.h stamp-h1
+install-libLIBRARIES: $(lib_LIBRARIES)
+	@$(NORMAL_INSTALL)
+	test -z "$(libdir)" || $(MKDIR_P) "$(DESTDIR)$(libdir)"
+	@list='$(lib_LIBRARIES)'; test -n "$(libdir)" || list=; \
+	list2=; for p in $$list; do \
+	  if test -f $$p; then \
+	    list2="$$list2 $$p"; \
+	  else :; fi; \
+	done; \
+	test -z "$$list2" || { \
+	  echo " $(INSTALL_DATA) $$list2 '$(DESTDIR)$(libdir)'"; \
+	  $(INSTALL_DATA) $$list2 "$(DESTDIR)$(libdir)" || exit $$?; }
+	@$(POST_INSTALL)
+	@list='$(lib_LIBRARIES)'; test -n "$(libdir)" || list=; \
+	for p in $$list; do \
+	  if test -f $$p; then \
+	    $(am__strip_dir) \
+	    echo " ( cd '$(DESTDIR)$(libdir)' && $(RANLIB) $$f )"; \
+	    ( cd "$(DESTDIR)$(libdir)" && $(RANLIB) $$f ) || exit $$?; \
+	  else :; fi; \
+	done
+
+uninstall-libLIBRARIES:
+	@$(NORMAL_UNINSTALL)
+	@list='$(lib_LIBRARIES)'; test -n "$(libdir)" || list=; \
+	files=`for p in $$list; do echo $$p; done | sed -e 's|^.*/||'`; \
+	test -n "$$files" || exit 0; \
+	echo " ( cd '$(DESTDIR)$(libdir)' && rm -f "$$files" )"; \
+	cd "$(DESTDIR)$(libdir)" && rm -f $$files
+
+clean-libLIBRARIES:
+	-test -z "$(lib_LIBRARIES)" || rm -f $(lib_LIBRARIES)
+snifl/$(am__dirstamp):
+	@$(MKDIR_P) snifl
+	@: > snifl/$(am__dirstamp)
+snifl/$(DEPDIR)/$(am__dirstamp):
+	@$(MKDIR_P) snifl/$(DEPDIR)
+	@: > snifl/$(DEPDIR)/$(am__dirstamp)
+snifl/v4.$(OBJEXT): snifl/$(am__dirstamp) \
+	snifl/$(DEPDIR)/$(am__dirstamp)
+snifl/udp.$(OBJEXT): snifl/$(am__dirstamp) \
+	snifl/$(DEPDIR)/$(am__dirstamp)
+snifl/tcp.$(OBJEXT): snifl/$(am__dirstamp) \
+	snifl/$(DEPDIR)/$(am__dirstamp)
+snifl/sock.$(OBJEXT): snifl/$(am__dirstamp) \
+	snifl/$(DEPDIR)/$(am__dirstamp)
+snifl/mgr.$(OBJEXT): snifl/$(am__dirstamp) \
+	snifl/$(DEPDIR)/$(am__dirstamp)
+snifl/dns.$(OBJEXT): snifl/$(am__dirstamp) \
+	snifl/$(DEPDIR)/$(am__dirstamp)
+snifl/jTree.$(OBJEXT): snifl/$(am__dirstamp) \
+	snifl/$(DEPDIR)/$(am__dirstamp)
+snifl/tunl.$(OBJEXT): snifl/$(am__dirstamp) \
+	snifl/$(DEPDIR)/$(am__dirstamp)
+libsnifl.a: $(libsnifl_a_OBJECTS) $(libsnifl_a_DEPENDENCIES) 
+	-rm -f libsnifl.a
+	$(libsnifl_a_AR) libsnifl.a $(libsnifl_a_OBJECTS) $(libsnifl_a_LIBADD)
+	$(RANLIB) libsnifl.a
 install-binPROGRAMS: $(bin_PROGRAMS)
 	@$(NORMAL_INSTALL)
 	test -z "$(bindir)" || $(MKDIR_P) "$(DESTDIR)$(bindir)"
@@ -290,28 +380,6 @@ uninstall-binPROGRAMS:
 
 clean-binPROGRAMS:
 	-test -z "$(bin_PROGRAMS)" || rm -f $(bin_PROGRAMS)
-snifl/$(am__dirstamp):
-	@$(MKDIR_P) snifl
-	@: > snifl/$(am__dirstamp)
-snifl/$(DEPDIR)/$(am__dirstamp):
-	@$(MKDIR_P) snifl/$(DEPDIR)
-	@: > snifl/$(DEPDIR)/$(am__dirstamp)
-snifl/v4.$(OBJEXT): snifl/$(am__dirstamp) \
-	snifl/$(DEPDIR)/$(am__dirstamp)
-snifl/udp.$(OBJEXT): snifl/$(am__dirstamp) \
-	snifl/$(DEPDIR)/$(am__dirstamp)
-snifl/tcp.$(OBJEXT): snifl/$(am__dirstamp) \
-	snifl/$(DEPDIR)/$(am__dirstamp)
-snifl/sock.$(OBJEXT): snifl/$(am__dirstamp) \
-	snifl/$(DEPDIR)/$(am__dirstamp)
-snifl/mgr.$(OBJEXT): snifl/$(am__dirstamp) \
-	snifl/$(DEPDIR)/$(am__dirstamp)
-snifl/dns.$(OBJEXT): snifl/$(am__dirstamp) \
-	snifl/$(DEPDIR)/$(am__dirstamp)
-snifl/jTree.$(OBJEXT): snifl/$(am__dirstamp) \
-	snifl/$(DEPDIR)/$(am__dirstamp)
-snifl/tunl.$(OBJEXT): snifl/$(am__dirstamp) \
-	snifl/$(DEPDIR)/$(am__dirstamp)
 demo/$(am__dirstamp):
 	@$(MKDIR_P) demo
 	@: > demo/$(am__dirstamp)
@@ -574,9 +642,9 @@ distcleancheck: distclean
 	       exit 1; } >&2
 check-am: all-am
 check: check-am
-all-am: Makefile $(PROGRAMS) config.h
+all-am: Makefile $(LIBRARIES) $(PROGRAMS) config.h
 installdirs:
-	for dir in "$(DESTDIR)$(bindir)"; do \
+	for dir in "$(DESTDIR)$(libdir)" "$(DESTDIR)$(bindir)"; do \
 	  test -z "$$dir" || $(MKDIR_P) "$$dir"; \
 	done
 install: install-am
@@ -610,7 +678,8 @@ maintainer-clean-generic:
 	@echo "it deletes files that may require special tools to rebuild."
 clean: clean-am
 
-clean-am: clean-binPROGRAMS clean-generic mostlyclean-am
+clean-am: clean-binPROGRAMS clean-generic clean-libLIBRARIES \
+	mostlyclean-am
 
 distclean: distclean-am
 	-rm -f $(am__CONFIG_DISTCLEAN_FILES)
@@ -637,7 +706,7 @@ install-dvi: install-dvi-am
 
 install-dvi-am:
 
-install-exec-am: install-binPROGRAMS
+install-exec-am: install-binPROGRAMS install-libLIBRARIES
 
 install-html: install-html-am
 
@@ -678,25 +747,25 @@ ps: ps-am
 
 ps-am:
 
-uninstall-am: uninstall-binPROGRAMS
+uninstall-am: uninstall-binPROGRAMS uninstall-libLIBRARIES
 
 .MAKE: all install-am install-strip
 
 .PHONY: CTAGS GTAGS all all-am am--refresh check check-am clean \
-	clean-binPROGRAMS clean-generic ctags dist dist-all dist-bzip2 \
-	dist-gzip dist-lzma dist-shar dist-tarZ dist-xz dist-zip \
-	distcheck distclean distclean-compile distclean-generic \
-	distclean-hdr distclean-tags distcleancheck distdir \
-	distuninstallcheck dvi dvi-am html html-am info info-am \
-	install install-am install-binPROGRAMS install-data \
+	clean-binPROGRAMS clean-generic clean-libLIBRARIES ctags dist \
+	dist-all dist-bzip2 dist-gzip dist-lzma dist-shar dist-tarZ \
+	dist-xz dist-zip distcheck distclean distclean-compile \
+	distclean-generic distclean-hdr distclean-tags distcleancheck \
+	distdir distuninstallcheck dvi dvi-am html html-am info \
+	info-am install install-am install-binPROGRAMS install-data \
 	install-data-am install-dvi install-dvi-am install-exec \
 	install-exec-am install-html install-html-am install-info \
-	install-info-am install-man install-pdf install-pdf-am \
-	install-ps install-ps-am install-strip installcheck \
-	installcheck-am installdirs maintainer-clean \
+	install-info-am install-libLIBRARIES install-man install-pdf \
+	install-pdf-am install-ps install-ps-am install-strip \
+	installcheck installcheck-am installdirs maintainer-clean \
 	maintainer-clean-generic mostlyclean mostlyclean-compile \
 	mostlyclean-generic pdf pdf-am ps ps-am tags uninstall \
-	uninstall-am uninstall-binPROGRAMS
+	uninstall-am uninstall-binPROGRAMS uninstall-libLIBRARIES
 
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
